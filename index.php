@@ -11,9 +11,9 @@ $singers = mysqli_query($conn, "SELECT * FROM singers");
 
 <div class="grid">
 <?php while ($s = mysqli_fetch_assoc($singers)) { ?>
-  <a href="pages/singer.php?id=<?php echo $s['id']; ?>" class="card">
-    <img src="assets/images/singers/<?php echo $s['image']; ?>">
-    <h3><?php echo $s['name']; ?></h3>
-  </a>
+    <a href="pages/singer.php?id=<?php echo $s['id']; ?>" class="card">
+        <img src="assets/images/singers/<?php echo $s['image']; ?>">
+        <h3><?php echo $s['name']; ?></h3>
+    </a>
 <?php } ?>
 </div>
