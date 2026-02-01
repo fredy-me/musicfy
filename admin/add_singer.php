@@ -1,23 +1,19 @@
 <?php
-// admin/add_singer.php - simple starter form
-require_once __DIR__ . '/../config/db.php';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // handle singer upload (name, image, bio) - implement later
+include "../config/db.php";
+
+if (isset($_POST['submit'])) {
+    $name = $_POST['name'];
+    $image = $_FILES['image']['name'];
+    $tmp = $_FILES['image']['tmp_name'];
+
+    move_uploaded_file($tmp, "../assets/images/singers/$image");
+
+    mysqli_query($conn, "INSERT INTO singers(name,image) VALUES('$name','$image')");
 }
 ?>
-<!doctype html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Add Singer - Admin</title>
-</head>
-<body>
-    <h1>Add Singer</h1>
-    <form method="post" enctype="multipart/form-data">
-        <label>Name: <input type="text" name="name"></label><br>
-        <label>Photo: <input type="file" name="photo"></label><br>
-        <label>Bio:<br><textarea name="bio" rows="5"></textarea></label><br>
-        <button type="submit">Add Singer</button>
-    </form>
-</body>
-</html>
+
+<form method="POST" enctype="multipart/form-data">
+  <input type="text" name="name" placeholder="Singer Name" required>
+  <input type="file" name="image" required>
+  <button name="submit">Add Singer</button>
+</form>

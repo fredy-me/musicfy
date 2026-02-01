@@ -1,28 +1,36 @@
 <?php
-// admin/add_media.php - upload audio/video and associate with singer/album
-require_once __DIR__ . '/../config/db.php';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // handle media upload - implement later
+include "../config/db.php";
+$singers = mysqli_query($conn, "SELECT * FROM singers");
+
+if (isset($_POST['submit'])) {
+    $singer_id = $_POST['singer'];
+    $title = $_POST['title'];
+    $type = $_POST['type'];
+    $file = $_FILES['file']['name'];
+    $tmp = $_FILES['file']['tmp_name'];
+
+    $folder = $type == "audio" ? "audio" : "video";
+    move_uploaded_file($tmp, "../assets/$folder/$file");
+
+    mysqli_query($conn, "INSERT INTO media(singer_id,title,type,file)
+                         VALUES('$singer_id','$title','$type','$file')");
 }
 ?>
-<!doctype html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Add Media - Admin</title>
-</head>
-<body>
-    <h1>Add Media</h1>
-    <form method="post" enctype="multipart/form-data">
-        <label>Title: <input type="text" name="title"></label><br>
-        <label>File: <input type="file" name="media"></label><br>
-        <label>Type: 
-            <select name="type">
-                <option value="audio">Audio</option>
-                <option value="video">Video</option>
-            </select>
-        </label><br>
-        <button type="submit">Upload</button>
-    </form>
-</body>
-</html>
+
+<form method="POST" enctype="multipart/form-data">
+  <select name="singer">
+    <?php while($s = mysqli_fetch_assoc($singers)) { ?>
+      <option value="<?= $s['id'] ?>"><?= $s['name'] ?></option>
+    <?php } ?>
+  </select>
+
+  <input type="text" name="title" placeholder="Song / Video Title" required>
+
+  <select name="type">
+    <option value="audio">Audio</option>
+    <option value="video">Video</option>
+  </select>
+
+  <input type="file" name="file" required>
+  <button name="submit">Upload</button>
+</form>

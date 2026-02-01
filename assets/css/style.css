@@ -1,5 +1,30 @@
-/* musicfy style.css - starter */
-html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#f8f8f8;color:#222}
-.container{max-width:1100px;margin:0 auto;padding:20px}
-.header{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
-/* Add your styles below */
+body {
+  background:#121212;
+  color:white;
+  font-family: Arial;
+}
+
+.grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fill,minmax(200px,1fr));
+  gap:20px;
+  padding:20px;
+}
+
+.card {
+  text-decoration:none;
+  color:white;
+  background:#1e1e1e;
+  border-radius:12px;
+  padding:10px;
+  transition:0.3s;
+}
+
+.card:hover {
+  transform:scale(1.05);
+}
+
+.card img {
+  width:100%;
+  border-radius:10px;
+}

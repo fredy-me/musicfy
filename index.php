@@ -1,22 +1,15 @@
 <?php
-// musicfy index.php - basic landing page
+include "config/db.php";
+$singers = mysqli_query($conn, "SELECT * FROM singers");
 ?>
-<!doctype html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>musicfy</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
-    <div class="container">
-        <header class="header">
-            <h1>musicfy</h1>
-            <nav><a href="admin/add_singer.php">Admin</a></nav>
-        </header>
-        <main>
-            <p>Welcome to musicfy. Build your music catalog.</p>
-        </main>
-    </div>
-</body>
-</html>
+
+<link rel="stylesheet" href="assets/css/style.css">
+
+<div class="grid">
+<?php while($s = mysqli_fetch_assoc($singers)) { ?>
+  <a href="pages/singer.php?id=<?= $s['id'] ?>" class="card">
+    <img src="assets/images/singers/<?= $s['image'] ?>">
+    <h3><?= $s['name'] ?></h3>
+  </a>
+<?php } ?>
+</div>
