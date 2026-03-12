@@ -261,6 +261,7 @@ input {
 }
 
 .form-group input[type="text"],
+.form-group input[type="url"],
 .form-group input[type="file"] {
     width: 100%;
     padding: 13px 14px;
@@ -270,6 +271,7 @@ input {
 }
 
 .form-group input[type="text"]:focus,
+.form-group input[type="url"]:focus,
 .form-group input[type="file"]:focus {
     outline: 2px solid rgba(19, 111, 99, 0.2);
     border-color: var(--primary);

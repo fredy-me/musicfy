@@ -2,11 +2,11 @@
 require_once 'db.php';
 
 $errors = [];
-$successMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $singerName = trim($_POST['singer_name'] ?? '');
     $songTitle = trim($_POST['song_title'] ?? '');
+    $audioUrl = trim($_POST['audio_url'] ?? '');
 
     if ($singerName === '') {
         $errors[] = 'Singer name is required.';
@@ -20,58 +20,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Please upload a cover image.';
     }
 
-    if (!isset($_FILES['audio_file']) || $_FILES['audio_file']['error'] !== UPLOAD_ERR_OK) {
-        $errors[] = 'Please upload an MP3 audio file.';
+    if ($audioUrl === '') {
+        $errors[] = 'Music URL is required.';
+    } elseif (!filter_var($audioUrl, FILTER_VALIDATE_URL)) {
+        $errors[] = 'Please enter a valid music URL.';
     }
 
     $coverPath = '';
-    $audioPath = '';
 
     if (empty($errors)) {
         $coverDirectory = __DIR__ . '/uploads/covers/';
-        $musicDirectory = __DIR__ . '/uploads/music/';
 
         if (!is_dir($coverDirectory)) {
             mkdir($coverDirectory, 0777, true);
         }
 
-        if (!is_dir($musicDirectory)) {
-            mkdir($musicDirectory, 0777, true);
-        }
-
         $coverExtension = strtolower(pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION));
-        $audioExtension = strtolower(pathinfo($_FILES['audio_file']['name'], PATHINFO_EXTENSION));
 
         $allowedImageExtensions = ['jpg', 'jpeg', 'png', 'webp'];
-        $allowedAudioExtensions = ['mp3'];
 
         if (!in_array($coverExtension, $allowedImageExtensions, true)) {
             $errors[] = 'Cover image must be JPG, JPEG, PNG, or WEBP.';
         }
 
-        if (!in_array($audioExtension, $allowedAudioExtensions, true)) {
-            $errors[] = 'Audio file must be in MP3 format.';
-        }
-
         if (empty($errors)) {
             $coverFileName = uniqid('cover_', true) . '.' . $coverExtension;
-            $audioFileName = uniqid('song_', true) . '.' . $audioExtension;
-
             $coverPath = 'uploads/covers/' . $coverFileName;
-            $audioPath = 'uploads/music/' . $audioFileName;
-
             $coverUploaded = move_uploaded_file($_FILES['cover_image']['tmp_name'], __DIR__ . '/' . $coverPath);
-            $audioUploaded = move_uploaded_file($_FILES['audio_file']['tmp_name'], __DIR__ . '/' . $audioPath);
 
-            if (!$coverUploaded || !$audioUploaded) {
+            if (!$coverUploaded) {
                 $errors[] = 'Failed to upload files. Please try again.';
 
                 if ($coverUploaded && file_exists(__DIR__ . '/' . $coverPath)) {
                     unlink(__DIR__ . '/' . $coverPath);
-                }
-
-                if ($audioUploaded && file_exists(__DIR__ . '/' . $audioPath)) {
-                    unlink(__DIR__ . '/' . $audioPath);
                 }
             }
         }
@@ -85,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($statement === false) {
             $errors[] = 'Failed to prepare database query.';
         } else {
-            $statement->bind_param('ssss', $singerName, $songTitle, $coverPath, $audioPath);
+            $statement->bind_param('ssss', $singerName, $songTitle, $coverPath, $audioUrl);
 
             if ($statement->execute()) {
                 header('Location: index.php?message=' . urlencode('Song added successfully.'));
@@ -96,10 +77,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($coverPath !== '' && file_exists(__DIR__ . '/' . $coverPath)) {
                 unlink(__DIR__ . '/' . $coverPath);
-            }
-
-            if ($audioPath !== '' && file_exists(__DIR__ . '/' . $audioPath)) {
-                unlink(__DIR__ . '/' . $audioPath);
             }
         }
     }
@@ -119,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div>
                 <p class="eyebrow">Music Upload Form</p>
                 <h1>Add Song</h1>
-                <p class="hero-text">Upload a cover image and an MP3 file, then save both paths in MySQL.</p>
+                <p class="hero-text">Upload a cover image and paste a music URL, then save the details in MySQL.</p>
             </div>
             <a class="button secondary" href="index.php">Back to Song List</a>
         </header>
@@ -165,8 +142,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="form-group">
-                <label for="audio_file">Audio File (MP3)</label>
-                <input type="file" id="audio_file" name="audio_file" accept=".mp3,audio/mpeg" required>
+                <label for="audio_url">Music URL</label>
+                <input
+                    type="url"
+                    id="audio_url"
+                    name="audio_url"
+                    placeholder="https://example.com/song.mp3"
+                    value="<?php echo htmlspecialchars($_POST['audio_url'] ?? ''); ?>"
+                    required
+                >
             </div>
 
             <button type="submit" class="button primary full-width">Save Song</button>

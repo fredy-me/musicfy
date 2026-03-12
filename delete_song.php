@@ -13,7 +13,7 @@ if ($id <= 0) {
     exit;
 }
 
-$selectStatement = $conn->prepare("SELECT cover_image, audio_file FROM songs WHERE id = ?");
+$selectStatement = $conn->prepare("SELECT cover_image FROM songs WHERE id = ?");
 
 if ($selectStatement === false) {
     header('Location: index.php?message=' . urlencode('Failed to prepare delete query.') . '&type=error');
@@ -41,14 +41,9 @@ $deleteStatement->bind_param('i', $id);
 
 if ($deleteStatement->execute()) {
     $coverPath = __DIR__ . '/' . $song['cover_image'];
-    $audioPath = __DIR__ . '/' . $song['audio_file'];
 
     if (is_file($coverPath)) {
         unlink($coverPath);
-    }
-
-    if (is_file($audioPath)) {
-        unlink($audioPath);
     }
 
     header('Location: index.php?message=' . urlencode('Song deleted successfully.'));
