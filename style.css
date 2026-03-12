@@ -260,6 +260,11 @@ input {
     font-weight: 700;
 }
 
+.help-text {
+    color: var(--muted);
+    line-height: 1.5;
+}
+
 .form-group input[type="text"],
 .form-group input[type="url"],
 .form-group input[type="file"] {

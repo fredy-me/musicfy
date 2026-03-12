@@ -3,6 +3,21 @@ require_once 'db.php';
 
 $errors = [];
 
+function getUploadErrorMessage(int $errorCode): string
+{
+    $messages = [
+        UPLOAD_ERR_INI_SIZE => 'The cover image is larger than the server upload limit.',
+        UPLOAD_ERR_FORM_SIZE => 'The cover image is larger than the form upload limit.',
+        UPLOAD_ERR_PARTIAL => 'The cover image upload was interrupted. Try again.',
+        UPLOAD_ERR_NO_FILE => 'Please upload a cover image.',
+        UPLOAD_ERR_NO_TMP_DIR => 'PHP is missing a temporary upload folder.',
+        UPLOAD_ERR_CANT_WRITE => 'The server cannot write the cover image to disk.',
+        UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the cover image upload.',
+    ];
+
+    return $messages[$errorCode] ?? 'Cover image upload failed.';
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $singerName = trim($_POST['singer_name'] ?? '');
     $songTitle = trim($_POST['song_title'] ?? '');
@@ -16,14 +31,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Song title is required.';
     }
 
-    if (!isset($_FILES['cover_image']) || $_FILES['cover_image']['error'] !== UPLOAD_ERR_OK) {
+    if (!isset($_FILES['cover_image'])) {
         $errors[] = 'Please upload a cover image.';
+    } elseif ($_FILES['cover_image']['error'] !== UPLOAD_ERR_OK) {
+        $errors[] = getUploadErrorMessage((int) $_FILES['cover_image']['error']);
     }
 
     if ($audioUrl === '') {
         $errors[] = 'Music URL is required.';
     } elseif (!filter_var($audioUrl, FILTER_VALIDATE_URL)) {
         $errors[] = 'Please enter a valid music URL.';
+    } else {
+        $audioPath = parse_url($audioUrl, PHP_URL_PATH) ?? '';
+        $audioExtension = strtolower(pathinfo($audioPath, PATHINFO_EXTENSION));
+
+        if ($audioExtension !== 'mp3') {
+            $errors[] = 'Use a direct MP3 file URL. YouTube page links will not work in the audio player.';
+        }
     }
 
     $coverPath = '';
@@ -33,6 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!is_dir($coverDirectory)) {
             mkdir($coverDirectory, 0777, true);
+        }
+
+        if (!is_writable($coverDirectory)) {
+            @chmod($coverDirectory, 0777);
+        }
+
+        if (!is_writable($coverDirectory)) {
+            $errors[] = 'The uploads/covers folder is not writable by Apache. Change its permissions and try again.';
         }
 
         $coverExtension = strtolower(pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION));
@@ -46,9 +78,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($errors)) {
             $coverFileName = uniqid('cover_', true) . '.' . $coverExtension;
             $coverPath = 'uploads/covers/' . $coverFileName;
-            $coverUploaded = move_uploaded_file($_FILES['cover_image']['tmp_name'], __DIR__ . '/' . $coverPath);
+            $tmpFile = $_FILES['cover_image']['tmp_name'];
 
-            if (!$coverUploaded) {
+            if (!is_uploaded_file($tmpFile)) {
+                $errors[] = 'The uploaded cover image was not received correctly. Please choose the file again.';
+            } else {
+                $coverUploaded = move_uploaded_file($tmpFile, __DIR__ . '/' . $coverPath);
+            }
+
+            if (empty($errors) && !$coverUploaded) {
                 $errors[] = 'Failed to upload files. Please try again.';
 
                 if ($coverUploaded && file_exists(__DIR__ . '/' . $coverPath)) {
@@ -151,6 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     value="<?php echo htmlspecialchars($_POST['audio_url'] ?? ''); ?>"
                     required
                 >
+                <small class="help-text">Use a direct `.mp3` file link. A YouTube or YouTube Music page URL will not play inside the HTML5 audio player.</small>
             </div>
 
             <button type="submit" class="button primary full-width">Save Song</button>
